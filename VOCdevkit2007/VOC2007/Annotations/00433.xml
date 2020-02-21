@@ -23,16 +23,4 @@
 			<ymax>590</ymax>
 		</bndbox>
 	</object>
-	<object>
-		<name>roller</name>
-		<pose>Unspecified</pose>
-		<truncated>0</truncated>
-		<difficult>0</difficult>
-		<bndbox>
-			<xmin>146</xmin>
-			<ymin>376</ymin>
-			<xmax>254</xmax>
-			<ymax>416</ymax>
-		</bndbox>
-	</object>
 </annotation>
