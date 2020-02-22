@@ -49,7 +49,7 @@ def parse_args():
                       default=1, type=int)
   parser.add_argument('--epochs', dest='max_epochs',
                       help='number of epochs to train',
-                      default=768, type=int)
+                      default=20, type=int)
   parser.add_argument('--disp_interval', dest='disp_interval',
                       help='number of iterations to display',
                       default=100, type=int)
@@ -61,7 +61,7 @@ def parse_args():
                       help='directory to save models', default="models",
                       type=str)
   parser.add_argument('--nw', dest='num_workers',
-                      help='number of worker to load data',
+                      help='number of workers to load data',
                       default=0, type=int)
   parser.add_argument('--cuda', dest='cuda',
                       help='whether use CUDA',
@@ -76,7 +76,7 @@ def parse_args():
                       help='batch_size',
                       default=1, type=int)
   parser.add_argument('--cag', dest='class_agnostic',
-                      help='whether perform class_agnostic bbox regression',
+                      help='whether to perform class_agnostic bbox regression',
                       action='store_true')
 
 # config optimization
@@ -111,7 +111,7 @@ def parse_args():
   parser.add_argument('--checkpoint', dest='checkpoint',
                       help='checkpoint to load model',
                       default=0, type=int)
-# log and diaplay
+# log and display
   parser.add_argument('--use_tfb', dest='use_tfboard',
                       help='whether use tensorboard',
                       action='store_true')
@@ -262,15 +262,15 @@ if __name__ == '__main__':
       else:
         params += [{'params':[value],'lr':lr, 'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
 
-  if args.cuda:
-    fasterRCNN.cuda()
-      
   if args.optimizer == "adam":
     lr = lr * 0.1
     optimizer = torch.optim.Adam(params)
 
   elif args.optimizer == "sgd":
     optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
+
+  if args.cuda:
+    fasterRCNN.cuda()
 
   if args.resume:
     load_name = os.path.join(output_dir,
@@ -308,11 +308,10 @@ if __name__ == '__main__':
     data_iter = iter(dataloader)
     for step in range(iters_per_epoch):
       data = next(data_iter)
-      with torch.no_grad():
-              im_data.resize_(data[0].size()).copy_(data[0])
-              im_info.resize_(data[1].size()).copy_(data[1])
-              gt_boxes.resize_(data[2].size()).copy_(data[2])
-              num_boxes.resize_(data[3].size()).copy_(data[3])
+      im_data.data.resize_(data[0].size()).copy_(data[0])
+      im_info.data.resize_(data[1].size()).copy_(data[1])
+      gt_boxes.data.resize_(data[2].size()).copy_(data[2])
+      num_boxes.data.resize_(data[3].size()).copy_(data[3])
 
       fasterRCNN.zero_grad()
       rois, cls_prob, bbox_pred, \

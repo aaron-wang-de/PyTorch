@@ -1,5 +1,5 @@
 # --------------------------------------------------------
-# Pytorch Multi-GPU Faster R-CNN
+# Tensorflow Faster R-CNN
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Jiasen Lu, Jianwei Yang, based on code from Ross Girshick
 # --------------------------------------------------------
@@ -27,10 +27,10 @@ from roi_data_layer.roidb import combined_roidb
 from roi_data_layer.roibatchLoader import roibatchLoader
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from model.rpn.bbox_transform import clip_boxes
-# from model.nms.nms_wrapper import nms
-from model.roi_layers import nms
+from model.nms.nms_wrapper import nms
 from model.rpn.bbox_transform import bbox_transform_inv
 from model.utils.net_utils import save_net, load_net, vis_detections
+
 from model.faster_rcnn.vgg16 import vgg16
 from model.faster_rcnn.resnet import resnet
 
@@ -228,11 +228,10 @@ if __name__ == '__main__':
   for i in range(num_images):
 
       data = next(data_iter)
-      with torch.no_grad():
-              im_data.resize_(data[0].size()).copy_(data[0])
-              im_info.resize_(data[1].size()).copy_(data[1])
-              gt_boxes.resize_(data[2].size()).copy_(data[2])
-              num_boxes.resize_(data[3].size()).copy_(data[3])
+      im_data.data.resize_(data[0].size()).copy_(data[0])
+      im_info.data.resize_(data[1].size()).copy_(data[1])
+      gt_boxes.data.resize_(data[2].size()).copy_(data[2])
+      num_boxes.data.resize_(data[3].size()).copy_(data[3])
 
       det_tic = time.time()
       rois, cls_prob, bbox_pred, \
@@ -261,7 +260,8 @@ if __name__ == '__main__':
           pred_boxes = clip_boxes(pred_boxes, im_info.data, 1)
       else:
           # Simply repeat the boxes, once for each class
-          pred_boxes = np.tile(boxes, (1, scores.shape[1]))
+          _ = torch.from_numpy(np.tile(boxes, (1, scores.shape[1])))
+          pred_boxes = _.cuda() if args.cuda > 0 else _
 
       pred_boxes /= data[1][0][2].item()
 
@@ -287,7 +287,7 @@ if __name__ == '__main__':
             cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
             # cls_dets = torch.cat((cls_boxes, cls_scores), 1)
             cls_dets = cls_dets[order]
-            keep = nms(cls_boxes[order, :], cls_scores[order], cfg.TEST.NMS)
+            keep = nms(cls_dets, cfg.TEST.NMS)
             cls_dets = cls_dets[keep.view(-1).long()]
             if vis:
               im2show = vis_detections(im2show, imdb.classes[j], cls_dets.cpu().numpy(), 0.3)

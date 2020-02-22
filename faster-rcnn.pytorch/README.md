@@ -2,7 +2,7 @@
 
 ## Introduction
 
-### Good news! This repo supports pytorch-1.0 now!!! We borrowed some code and techniques from [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark).
+### :boom: Good news! This repo supports pytorch-1.0 now!!! We borrowed some code and techniques from [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark). Just go to pytorch-1.0 branch!
 
 This project is a *faster* pytorch implementation of faster R-CNN, aimed to accelerating the training of faster R-CNN object detection models. Recently, there are a number of good implementations:
 
@@ -14,7 +14,7 @@ This project is a *faster* pytorch implementation of faster R-CNN, aimed to acce
 
 * [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn), developed based on Pytorch + TensorFlow + Numpy
 
-During our implementing, we referred the above implementations, especially [longcw/faster_rcnn_pytorch](https://github.com/longcw/faster_rcnn_pytorch). However, our implementation has several unique and new features compared with the above implementations:
+During our implementing, we referred the above implementations, especailly [longcw/faster_rcnn_pytorch](https://github.com/longcw/faster_rcnn_pytorch). However, our implementation has several unique and new features compared with the above implementations:
 
 * **It is pure Pytorch code**. We convert all the numpy implementations to pytorch!
 
@@ -24,7 +24,7 @@ During our implementing, we referred the above implementations, especially [long
 
 * **It supports three pooling methods**. We integrate three pooling methods: roi pooing, roi align and roi crop. More importantly, we modify all of them to support multi-image batch training.
 
-* **It is memory efficient**. We limit the image aspect ratio, and group images with similar aspect ratios into a minibatch. As such, we can train resnet101 and VGG16 with batchsize = 4 (4 images) on a sigle Titan X (12 GB). When training with 8 GPU, the maximum batchsize for each GPU is 3 (Res101), totally 24.
+* **It is memory efficient**. We limit the image aspect ratio, and group images with similar aspect ratios into a minibatch. As such, we can train resnet101 and VGG16 with batchsize = 4 (4 images) on a single Titan X (12 GB). When training with 8 GPU, the maximum batchsize for each GPU is 3 (Res101), totaling 24.
 
 * **It is faster**. Based on the above modifications, the training is much faster. We report the training speed on NVIDIA TITAN Xp in the tables below.
 
@@ -32,9 +32,9 @@ During our implementing, we referred the above implementations, especially [long
 
 - [x] Support both python2 and python3 (great thanks to [cclauss](https://github.com/cclauss)).
 - [x] Add deformable pooling layer (mainly supported by [Xander](https://github.com/xanderchf)).
-- [x] Support pytorch-0.4.0 (go to master branch).
+- [x] Support pytorch-0.4.0 (this branch).
 - [x] Support tensorboardX.
-- [x] Support pytorch-1.0 (this branch).
+- [x] Support pytorch-1.0 (go to pytorch-1.0 branch).
 
 ## Other Implementations
 
@@ -42,13 +42,15 @@ During our implementing, we referred the above implementations, especially [long
 
 * [Mask R-CNN](https://github.com/roytseng-tw/mask-rcnn.pytorch) (~~ongoing~~ already implemented by [roytseng-tw](https://github.com/roytseng-tw))
 
+* [Graph R-CNN](https://github.com/jwyang/graph-rcnn.pytorch) (extension to scene graph generation)
+
 ## Tutorial
 
 * [Blog](http://www.telesens.co/2018/03/11/object-detection-and-classification-using-r-cnns/) by [ankur6ue](https://github.com/ankur6ue)
 
 ## Benchmarking
 
-We benchmark our code thoroughly on three datasets: pascal voc, coco and imagenet-200, using two different network architecture: vgg16 and resnet101. Below are the results:
+We benchmark our code thoroughly on three datasets: pascal voc, coco and visual genome, using two different network architectures: vgg16 and resnet101. Below are the results:
 
 1). PASCAL VOC 2007 (Train/Test: 07trainval/07test, scale=600, ROI Align)
 
@@ -108,12 +110,12 @@ cd faster-rcnn.pytorch && mkdir data
 ### prerequisites
 
 * Python 2.7 or 3.6
-* Pytorch 1.0 (for Pytorch 0.4.0 go to master branch)
+* Pytorch 0.4.0 (**now it does not support 0.4.1 or higher**)
 * CUDA 8.0 or higher
 
 ### Data Preparation
 
-* **PASCAL_VOC 07+12**: Please follow the instructions in [py-faster-rcnn](https://github.com/rbgirshick/py-faster-rcnn#beyond-the-demo-installation-for-training-and-testing-models) to prepare VOC datasets. Actually, you can refer to any others. After downloading the data, creat softlinks in the folder data/.
+* **PASCAL_VOC 07+12**: Please follow the instructions in [py-faster-rcnn](https://github.com/rbgirshick/py-faster-rcnn#beyond-the-demo-installation-for-training-and-testing-models) to prepare VOC datasets. Actually, you can refer to any others. After downloading the data, create softlinks in the folder data/.
 
 * **COCO**: Please also follow the instructions in [py-faster-rcnn](https://github.com/rbgirshick/py-faster-rcnn#beyond-the-demo-installation-for-training-and-testing-models) to prepare the data.
 
@@ -135,6 +137,18 @@ Download them and put them into the data/pretrained_model/.
 
 ### Compilation
 
+As pointed out by [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn), choose the right `-arch` in `make.sh` file, to compile the cuda code:
+
+  | GPU model  | Architecture |
+  | ------------- | ------------- |
+  | TitanX (Maxwell/Pascal) | sm_52 |
+  | GTX 960M | sm_50 |
+  | GTX 1080 (Ti) | sm_61 |
+  | Grid K520 (AWS g2.2xlarge) | sm_30 |
+  | Tesla K80 (AWS p2.xlarge) | sm_37 |
+
+More details about setting the architecture can be found [here](https://developer.nvidia.com/cuda-gpus) or [here](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)
+
 Install all the python dependencies using pip:
 ```
 pip install -r requirements.txt
@@ -144,7 +158,7 @@ Compile the cuda dependencies using following simple commands:
 
 ```
 cd lib
-python setup.py build develop
+sh make.sh
 ```
 
 It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. The default version is compiled with Python 2.7, please compile by yourself if you are using a different python version.
@@ -186,13 +200,13 @@ Change dataset to "coco" or 'vg' if you want to train on COCO or Visual Genome.
 
 ## Test
 
-If you want to evlauate the detection performance of a pre-trained vgg16 model on pascal_voc test set, simply run
+If you want to evaluate the detection performance of a pre-trained vgg16 model on pascal_voc test set, simply run
 ```
 python test_net.py --dataset pascal_voc --net vgg16 \
                    --checksession $SESSION --checkepoch $EPOCH --checkpoint $CHECKPOINT \
                    --cuda
 ```
-Specify the specific model session, chechepoch and checkpoint, e.g., SESSION=1, EPOCH=6, CHECKPOINT=416.
+Specify the specific model session, checkepoch and checkpoint, e.g., SESSION=1, EPOCH=6, CHECKPOINT=416.
 
 ## Demo
 
